@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Chọn kênh & Upload ảnh</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="trang-kenh">
+
+<div id="cot-kenh">
+    <h3>Kênh trong server</h3>
+    <div class="canh-bao" id="canh-bao-kenh" style="display:none;"></div>
+    <div id="danh-sach-kenh"></div>
+</div>
+
+<div id="cot-noidung">
+    <div class="top-bar">
+        <span id="hien-thi-guild"></span>
+        <a href="#" id="nut-dangxuat">Đăng xuất</a>
+    </div>
+
+    <div id="vung-upload">
+        <h3>Upload ảnh lên kênh: <span id="ten-kenh-dachon">Chưa chọn kênh</span></h3>
+        <input type="file" id="input-anh" accept="image/*" multiple disabled>
+
+        <div class="hang-nut">
+            <button type="button" class="nut-phu" id="nut-lo-moi" disabled>Up lô ảnh mới</button>
+            <button type="button" class="nut-phu nguy-hiem" id="nut-xoa-tatca" disabled>Xóa toàn bộ</button>
+        </div>
+
+        <div id="dem-anh"></div>
+        <div id="xem-truoc"></div>
+        <button class="up" id="nut-upload" disabled>Upload ảnh</button>
+        <div id="tien-trinh"></div>
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+const matKhau = localStorage.getItem('mat_khau');
+const guildId = localStorage.getItem('guild_id');
+
+if (!matKhau || !guildId) {
+    window.location.href = 'index.html';
+}
+
+document.getElementById('hien-thi-guild').textContent = 'Server ID: ' + guildId;
+document.getElementById('nut-dangxuat').addEventListener('click', function(e) {
+    e.preventDefault();
+    localStorage.clear();
+    window.location.href = 'index.html';
+});
+
+let kenhDangChonId = null;
+let boDemId = 0;
+let danhSachFileDaChon = [];
+
+// ----- Tải danh sách kênh -----
+async function taiDanhSachKenh() {
+    const canhBao = document.getElementById('canh-bao-kenh');
+    try {
+        const res = await fetch(WORKER_URL + '/kenh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mat_khau: matKhau, guild_id: guildId }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            canhBao.textContent = data.loi || 'Không tải được kênh';
+            canhBao.style.display = 'block';
+            if (res.status === 401) window.location.href = 'index.html';
+            return;
+        }
+
+        veCayKenh(data.kenh);
+    } catch (err) {
+        canhBao.textContent = 'Lỗi kết nối: ' + err.message;
+        canhBao.style.display = 'block';
+    }
+}
+
+function veCayKenh(danhSachKenh) {
+    const container = document.getElementById('danh-sach-kenh');
+    container.innerHTML = '';
+
+    const nhomTheoCha = {};
+    danhSachKenh.forEach(function(k) {
+        const key = k.parent_id || 'goc';
+        if (!nhomTheoCha[key]) nhomTheoCha[key] = [];
+        nhomTheoCha[key].push(k);
+    });
+
+    const sapXep = (a, b) => (a.position || 0) - (b.position || 0);
+
+    const kenhGoc = (nhomTheoCha['goc'] || []).filter(k => k.type !== 4).sort(sapXep);
+    const danhSachCategory = danhSachKenh.filter(k => k.type === 4).sort(sapXep);
+
+    kenhGoc.forEach(k => container.appendChild(taoDongKenh(k)));
+
+    danhSachCategory.forEach(function(cat) {
+        const tieuDe = document.createElement('div');
+        tieuDe.className = 'category-ten';
+        tieuDe.textContent = cat.name;
+        container.appendChild(tieuDe);
+
+        const conCua = (nhomTheoCha[cat.id] || []).filter(k => k.type !== 4).sort(sapXep);
+        conCua.forEach(k => container.appendChild(taoDongKenh(k)));
+    });
+}
+
+function taoDongKenh(kenh) {
+    const div = document.createElement('div');
+    div.className = 'kenh-item';
+    div.dataset.id = kenh.id;
+    div.dataset.ten = kenh.name;
+    div.textContent = '# ' + kenh.name;
+    div.addEventListener('click', function() {
+        document.querySelectorAll('.kenh-item').forEach(x => x.classList.remove('dangchon'));
+        div.classList.add('dangchon');
+        kenhDangChonId = kenh.id;
+        document.getElementById('ten-kenh-dachon').textContent = kenh.name;
+        document.getElementById('input-anh').disabled = false;
+        document.getElementById('nut-lo-moi').disabled = false;
+        capNhatNutUpload();
+    });
+    return div;
+}
+
+taiDanhSachKenh();
+
+// ----- Chọn / quản lý ảnh -----
+const inputAnh = document.getElementById('input-anh');
+const xemTruoc = document.getElementById('xem-truoc');
+const nutUpload = document.getElementById('nut-upload');
+const tienTrinh = document.getElementById('tien-trinh');
+const nutLoMoi = document.getElementById('nut-lo-moi');
+const nutXoaTatCa = document.getElementById('nut-xoa-tatca');
+const demAnh = document.getElementById('dem-anh');
+
+inputAnh.addEventListener('change', function() {
+    Array.from(inputAnh.files).forEach(function(file) {
+        danhSachFileDaChon.push({ id: 'anh-' + (boDemId++), file: file, daChon: true });
+    });
+    inputAnh.value = '';
+    veLaiDanhSachAnh();
+});
+
+function veLaiDanhSachAnh() {
+    xemTruoc.innerHTML = '';
+
+    danhSachFileDaChon.forEach(function(muc) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'anh-item' + (muc.daChon ? '' : ' bo-tich');
+        wrapper.dataset.id = muc.id;
+
+        const img = document.createElement('img');
+        const reader = new FileReader();
+        reader.onload = e => { img.src = e.target.result; };
+        reader.readAsDataURL(muc.file);
+
+        const nutXoa1 = document.createElement('button');
+        nutXoa1.className = 'nut-xoa-1';
+        nutXoa1.type = 'button';
+        nutXoa1.textContent = '×';
+        nutXoa1.addEventListener('click', function() {
+            danhSachFileDaChon = danhSachFileDaChon.filter(x => x.id !== muc.id);
+            veLaiDanhSachAnh();
+        });
+
+        const nhanCheckbox = document.createElement('label');
+        nhanCheckbox.className = 'nhan-checkbox';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = muc.daChon;
+        checkbox.addEventListener('change', function() {
+            muc.daChon = checkbox.checked;
+            wrapper.classList.toggle('bo-tich', !muc.daChon);
+            capNhatDemAnh();
+            capNhatNutUpload();
+        });
+        nhanCheckbox.appendChild(checkbox);
+        nhanCheckbox.append(' chọn');
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(nutXoa1);
+        wrapper.appendChild(nhanCheckbox);
+        xemTruoc.appendChild(wrapper);
+    });
+
+    capNhatDemAnh();
+    capNhatNutUpload();
+}
+
+function capNhatDemAnh() {
+    const tongSo = danhSachFileDaChon.length;
+    const soDaChon = danhSachFileDaChon.filter(x => x.daChon).length;
+    demAnh.textContent = tongSo > 0
+        ? `Đã chọn ${tongSo} ảnh, trong đó ${soDaChon} ảnh sẽ được upload.`
+        : '';
+    nutXoaTatCa.disabled = tongSo === 0;
+}
+
+function capNhatNutUpload() {
+    const soDaChon = danhSachFileDaChon.filter(x => x.daChon).length;
+    nutUpload.disabled = !(kenhDangChonId && soDaChon > 0);
+}
+
+nutLoMoi.addEventListener('click', function() {
+    danhSachFileDaChon = [];
+    veLaiDanhSachAnh();
+    tienTrinh.innerHTML = '';
+    inputAnh.click();
+});
+
+nutXoaTatCa.addEventListener('click', function() {
+    danhSachFileDaChon = [];
+    veLaiDanhSachAnh();
+});
+
+// ----- Upload -----
+nutUpload.addEventListener('click', async function() {
+    const dsUpload = danhSachFileDaChon.filter(x => x.daChon);
+    if (!kenhDangChonId || dsUpload.length === 0) return;
+
+    nutUpload.disabled = true;
+    tienTrinh.innerHTML = '';
+
+    const KICH_THUOC_LO = 10;
+    const tongSoLo = Math.ceil(dsUpload.length / KICH_THUOC_LO);
+
+    for (let i = 0; i < tongSoLo; i++) {
+        const lo = dsUpload.slice(i * KICH_THUOC_LO, (i + 1) * KICH_THUOC_LO);
+        const dong = document.createElement('div');
+        dong.className = 'dong-tien-trinh';
+        dong.textContent = `Đang upload lô ${i + 1}/${tongSoLo} (${lo.length} ảnh)...`;
+        tienTrinh.appendChild(dong);
+
+        const formData = new FormData();
+        formData.append('mat_khau', matKhau);
+        formData.append('channel_id', kenhDangChonId);
+        lo.forEach(muc => formData.append('files', muc.file, muc.file.name));
+
+        try {
+            const res = await fetch(WORKER_URL + '/upanh', { method: 'POST', body: formData });
+            const ketQua = await res.json();
+
+            if (res.ok && ketQua.ok) {
+                dong.textContent = `Lô ${i + 1}/${tongSoLo}: Upload thành công (${lo.length} ảnh).`;
+                dong.classList.add('thanh-cong');
+            } else {
+                dong.textContent = `Lô ${i + 1}/${tongSoLo}: Thất bại - ${ketQua.loi || 'Lỗi không xác định'}`;
+                dong.classList.add('that-bai');
+            }
+        } catch (err) {
+            dong.textContent = `Lô ${i + 1}/${tongSoLo}: Lỗi kết nối - ${err.message}`;
+            dong.classList.add('that-bai');
+        }
+    }
+
+    danhSachFileDaChon = danhSachFileDaChon.filter(x => !x.daChon);
+    veLaiDanhSachAnh();
+    nutUpload.disabled = false;
+});
+</script>
+</body>
+</html>

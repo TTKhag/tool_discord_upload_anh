@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Đăng nhập</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="trang-dangnhap">
+    <div class="box">
+        <h2>Đăng nhập</h2>
+        <div class="loi" id="hop-loi" style="display:none;"></div>
+        <form id="form-dangnhap">
+            <label>Mật khẩu truy cập</label>
+            <input type="password" id="mat_khau" required>
+
+            <label>Guild ID (ID server Discord)</label>
+            <input type="text" id="guild_id" required placeholder="Ví dụ: 1523608666899742800">
+
+            <button type="submit">Đăng nhập</button>
+        </form>
+        <div class="ghichu">
+            Mật khẩu này do bạn tự đặt khi tạo Worker (biến APP_PASSWORD), không phải Bot Token.
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const form = document.getElementById('form-dangnhap');
+        const hopLoi = document.getElementById('hop-loi');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hopLoi.style.display = 'none';
+
+            const matKhau = document.getElementById('mat_khau').value;
+            const guildId = document.getElementById('guild_id').value.trim();
+
+            try {
+                const res = await fetch(WORKER_URL + '/kenh', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mat_khau: matKhau, guild_id: guildId }),
+                });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    hopLoi.textContent = data.loi || 'Đăng nhập thất bại';
+                    hopLoi.style.display = 'block';
+                    return;
+                }
+
+                localStorage.setItem('mat_khau', matKhau);
+                localStorage.setItem('guild_id', guildId);
+                window.location.href = 'kenh.html';
+            } catch (err) {
+                hopLoi.textContent = 'Lỗi kết nối tới Worker: ' + err.message;
+                hopLoi.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

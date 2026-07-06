@@ -1,0 +1,47 @@
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; background:#2b2d31; color:#fff; margin:0; }
+
+/* Trang đăng nhập */
+.trang-dangnhap { display:flex; align-items:center; justify-content:center; height:100vh; }
+.box { background:#313338; padding:30px; border-radius:8px; width:360px; box-shadow:0 4px 12px rgba(0,0,0,.4); }
+.box h2 { margin-top:0; text-align:center; }
+.box label { display:block; margin:14px 0 6px; font-size:13px; color:#b5bac1; text-transform:uppercase; }
+.box input { width:100%; padding:10px; border-radius:4px; border:none; background:#1e1f22; color:#fff; }
+.box button { width:100%; margin-top:20px; padding:10px; border:none; border-radius:4px; background:#5865f2; color:#fff; font-weight:bold; cursor:pointer; }
+.box button:hover { background:#4752c4; }
+.loi { background:#f23f42; padding:8px; border-radius:4px; font-size:13px; margin-bottom:10px; }
+.ghichu { font-size:12px; color:#949ba4; margin-top:14px; line-height:1.5; }
+
+/* Trang kênh */
+.trang-kenh { display:flex; height:100vh; }
+#cot-kenh { width:280px; background:#232428; padding:16px; overflow-y:auto; border-right:1px solid #1e1f22; }
+#cot-noidung { flex:1; padding:24px; overflow-y:auto; }
+h3 { margin-top:0; }
+.top-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.top-bar a { color:#f23f42; text-decoration:none; font-size:13px; }
+.category-ten { font-size:12px; text-transform:uppercase; color:#949ba4; padding:8px 4px 4px; font-weight:bold; }
+.kenh-item { padding:6px 8px; border-radius:4px; cursor:pointer; font-size:14px; color:#dbdee1; }
+.kenh-item:hover { background:#35373c; }
+.kenh-item.dangchon { background:#404249; color:#fff; font-weight:bold; }
+.canh-bao { background:#f23f42; padding:10px; border-radius:4px; margin-bottom:16px; }
+
+#vung-upload { background:#313338; padding:24px; border-radius:8px; max-width:640px; }
+#vung-upload input[type=file] { margin:12px 0; color:#fff; }
+#ten-kenh-dachon { font-weight:bold; color:#5865f2; }
+button.up { padding:10px 20px; border:none; border-radius:4px; background:#5865f2; color:#fff; cursor:pointer; font-weight:bold; }
+button.up:disabled { background:#4e5058; cursor:not-allowed; }
+.hang-nut { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+.nut-phu { padding:8px 14px; border:none; border-radius:4px; background:#4e5058; color:#fff; cursor:pointer; font-size:13px; }
+.nut-phu:hover { background:#6d6f78; }
+.nut-phu.nguy-hiem { background:#a12d2f; }
+.nut-phu.nguy-hiem:hover { background:#c0392b; }
+#xem-truoc { display:flex; flex-wrap:wrap; gap:10px; margin:12px 0; }
+.anh-item { position:relative; width:80px; text-align:center; }
+.anh-item img { width:80px; height:80px; object-fit:cover; border-radius:4px; display:block; opacity:1; transition:opacity .15s; }
+.anh-item.bo-tich img { opacity:0.3; }
+.anh-item .nhan-checkbox { display:flex; align-items:center; justify-content:center; gap:4px; font-size:11px; margin-top:4px; color:#dbdee1; cursor:pointer; }
+.anh-item .nut-xoa-1 { position:absolute; top:-6px; right:-6px; width:20px; height:20px; border-radius:50%; background:#f23f42; color:#fff; border:none; cursor:pointer; font-size:12px; line-height:1; }
+#dem-anh { font-size:13px; color:#949ba4; margin-top:6px; }
+#tien-trinh { margin-top:16px; font-size:13px; line-height:1.6; max-height:300px; overflow-y:auto; }
+.dong-tien-trinh.thanh-cong { color:#3ba55c; }
+.dong-tien-trinh.that-bai { color:#f23f42; }
