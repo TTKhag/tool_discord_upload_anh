@@ -1,0 +1,11 @@
+name = "discord-upload-worker"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://ten-github-cua-ban.github.io"
+
+# BOT_TOKEN và APP_PASSWORD KHÔNG khai báo ở đây.
+# Set bằng lệnh (bí mật, không lộ trong code):
+#   wrangler secret put BOT_TOKEN
+#   wrangler secret put APP_PASSWORD
