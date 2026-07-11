@@ -16,8 +16,17 @@ export default {
       if (url.pathname === '/kenh' && request.method === 'POST') {
         return await layDanhSachKenh(request, env, corsHeaders);
       }
+      if (url.pathname === '/tinnhan' && request.method === 'POST') {
+        return await layAnhTrongKenh(request, env, corsHeaders);
+      }
       if (url.pathname === '/upanh' && request.method === 'POST') {
         return await uploadAnh(request, env, corsHeaders);
+      }
+      if (url.pathname === '/taokenh' && request.method === 'POST') {
+        return await taoKenh(request, env, corsHeaders);
+      }
+      if (url.pathname === '/anh' && request.method === 'POST') {
+        return await layAnhGoc(request, env, corsHeaders);
       }
       return jsonRes({ loi: 'Không tìm thấy endpoint' }, 404, corsHeaders);
     } catch (err) {
@@ -50,6 +59,110 @@ async function layDanhSachKenh(request, env, corsHeaders) {
     return jsonRes({ loi: 'Không lấy được kênh (mã ' + res.status + ')', chi_tiet: data }, res.status, corsHeaders);
   }
   return jsonRes({ kenh: data }, 200, corsHeaders);
+}
+
+// Lấy danh sách ảnh (attachments) từ các tin nhắn trong 1 kênh
+async function layAnhTrongKenh(request, env, corsHeaders) {
+  const body = await request.json();
+
+  if (body.mat_khau !== env.APP_PASSWORD) {
+    return jsonRes({ loi: 'Sai mật khẩu' }, 401, corsHeaders);
+  }
+
+  const channelId = body.channel_id;
+  const res = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=100`, {
+    headers: { Authorization: `Bot ${env.BOT_TOKEN}` },
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    return jsonRes({ loi: 'Không lấy được tin nhắn (mã ' + res.status + ')', chi_tiet: data }, res.status, corsHeaders);
+  }
+
+  // Không trả url gốc của Discord CDN về trình duyệt — chỉ trả id để FE gọi
+  // ngược lại endpoint /anh khi cần hiển thị, tránh lộ link ảnh qua DOM/devtools.
+  const tinNhan = data.map(tn => ({
+    id: tn.id,
+    attachments: (tn.attachments || [])
+      .filter(a => (a.content_type || '').startsWith('image/'))
+      .map(a => ({ id: a.id, filename: a.filename })),
+  }));
+
+  return jsonRes({ tin_nhan: tinNhan }, 200, corsHeaders);
+}
+
+// Lấy đúng 1 ảnh gốc (proxy): FE gửi id tin nhắn + id đính kèm, Worker tự tra
+// lại link thật trên Discord rồi stream bytes về, link CDN gốc không bao giờ
+// lộ ra phía trình duyệt.
+async function layAnhGoc(request, env, corsHeaders) {
+  const body = await request.json();
+
+  if (body.mat_khau !== env.APP_PASSWORD) {
+    return jsonRes({ loi: 'Sai mật khẩu' }, 401, corsHeaders);
+  }
+
+  const { channel_id, message_id, attachment_id } = body;
+  if (!channel_id || !message_id || !attachment_id) {
+    return jsonRes({ loi: 'Thiếu tham số' }, 400, corsHeaders);
+  }
+
+  const resTin = await fetch(`https://discord.com/api/v10/channels/${channel_id}/messages/${message_id}`, {
+    headers: { Authorization: `Bot ${env.BOT_TOKEN}` },
+  });
+  if (!resTin.ok) {
+    return jsonRes({ loi: 'Không lấy được tin nhắn gốc (mã ' + resTin.status + ')' }, resTin.status, corsHeaders);
+  }
+  const tinNhan = await resTin.json();
+  const dinhKem = (tinNhan.attachments || []).find(a => a.id === attachment_id);
+  if (!dinhKem) {
+    return jsonRes({ loi: 'Không tìm thấy ảnh' }, 404, corsHeaders);
+  }
+
+  const resAnh = await fetch(dinhKem.url);
+  if (!resAnh.ok || !resAnh.body) {
+    return jsonRes({ loi: 'Không tải được ảnh gốc' }, 502, corsHeaders);
+  }
+
+  return new Response(resAnh.body, {
+    status: 200,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': dinhKem.content_type || 'application/octet-stream',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+// Tạo danh mục (type 4) hoặc kênh chữ (type 0) trong guild
+async function taoKenh(request, env, corsHeaders) {
+  const body = await request.json();
+
+  if (body.mat_khau !== env.APP_PASSWORD) {
+    return jsonRes({ loi: 'Sai mật khẩu' }, 401, corsHeaders);
+  }
+
+  const { guild_id, name, type, parent_id } = body;
+  if (!guild_id || !name || !name.trim() || (type !== 0 && type !== 4)) {
+    return jsonRes({ loi: 'Thiếu hoặc sai tham số (cần name và type là 0 hoặc 4)' }, 400, corsHeaders);
+  }
+
+  const payload = { name: name.trim(), type };
+  if (type === 0 && parent_id) payload.parent_id = parent_id;
+
+  const res = await fetch(`https://discord.com/api/v10/guilds/${guild_id}/channels`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bot ${env.BOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    return jsonRes({ loi: 'Không tạo được (mã ' + res.status + ')', chi_tiet: data }, res.status, corsHeaders);
+  }
+  return jsonRes({ ok: true, kenh: data }, 200, corsHeaders);
 }
 
 // Nhận ảnh từ FE (tối đa 10 ảnh/lần) và up lên kênh Discord
@@ -87,3 +200,4 @@ async function uploadAnh(request, env, corsHeaders) {
   }
   return jsonRes({ ok: true, ket_qua: data }, 200, corsHeaders);
 }
+
