@@ -2,23 +2,39 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Chọn kênh & Upload ảnh</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body class="trang-kenh">
 
+<button type="button" class="nut-mobile-toggle" id="nut-mobile-trai" aria-label="Mở danh sách kênh">☰</button>
+<button type="button" class="nut-mobile-toggle" id="nut-mobile-phai" aria-label="Mở menu">⋮</button>
+
 <div id="cot-kenh">
     <h3>Kênh trong server</h3>
+    <div class="hang-tao-kenh">
+        <button type="button" class="nut-phu" id="nut-tao-danhmuc">+ Danh mục</button>
+        <button type="button" class="nut-phu" id="nut-tao-kenh">+ Kênh</button>
+    </div>
+    <div class="form-tao-kenh" id="form-tao-kenh" style="display:none;">
+        <input type="text" id="ten-moi" placeholder="Tên danh mục/kênh...">
+        <select id="chon-danhmuc-cha" style="display:none;">
+            <option value="">-- Không thuộc danh mục --</option>
+        </select>
+        <div class="hang-nut">
+            <button type="button" class="nut-phu" id="nut-xacnhan-tao">Tạo</button>
+            <button type="button" class="nut-phu" id="nut-huy-tao">Hủy</button>
+        </div>
+        <div class="canh-bao" id="canh-bao-tao" style="display:none;"></div>
+    </div>
+    <input type="text" id="tim-kiem-kenh" placeholder="Tìm kênh hoặc danh mục...">
     <div class="canh-bao" id="canh-bao-kenh" style="display:none;"></div>
     <div id="danh-sach-kenh"></div>
 </div>
+<div class="lop-phu" id="lop-phu-trai"></div>
 
 <div id="cot-noidung">
-    <div class="top-bar">
-        <span id="hien-thi-guild"></span>
-        <a href="#" id="nut-dangxuat">Đăng xuất</a>
-    </div>
-
     <div id="vung-upload">
         <h3>Upload ảnh lên kênh: <span id="ten-kenh-dachon">Chưa chọn kênh</span></h3>
         <input type="file" id="input-anh" accept="image/*" multiple disabled>
@@ -33,7 +49,55 @@
         <button class="up" id="nut-upload" disabled>Upload ảnh</button>
         <div id="tien-trinh"></div>
     </div>
+
+    <div id="vung-xem" style="display:none;">
+        <div class="vung-xem-header">
+            <h3>Đang xem: <span id="ten-kenh-dang-xem">Chưa chọn kênh</span></h3>
+            <div class="canh-bao" id="canh-bao-xem" style="display:none;"></div>
+            <div class="thanh-dieu-huong">
+                <button type="button" class="nut-phu" id="nut-kenh-truoc-1" disabled>◀ Kênh trước</button>
+                <div class="chon-chuong-wrap">
+                    <button type="button" class="nut-chon-chuong" id="nut-chon-chuong-1" disabled>
+                        <span id="ten-chuong-hienthi-1">Chưa chọn kênh</span><span class="mui-ten-chuong">▾</span>
+                    </button>
+                    <div class="danhsach-chuong" id="danhsach-chuong-1"></div>
+                </div>
+                <button type="button" class="nut-phu" id="nut-kenh-sau-1" disabled>Kênh sau ▶</button>
+            </div>
+        </div>
+
+        <div id="khung-anh"></div>
+
+        <div class="vung-xem-footer">
+            <div class="thanh-dieu-huong">
+                <button type="button" class="nut-phu" id="nut-kenh-truoc-2" disabled>◀ Kênh trước</button>
+                <div class="chon-chuong-wrap">
+                    <button type="button" class="nut-chon-chuong" id="nut-chon-chuong-2" disabled>
+                        <span id="ten-chuong-hienthi-2">Chưa chọn kênh</span><span class="mui-ten-chuong">▾</span>
+                    </button>
+                    <div class="danhsach-chuong" id="danhsach-chuong-2"></div>
+                </div>
+                <button type="button" class="nut-phu" id="nut-kenh-sau-2" disabled>Kênh sau ▶</button>
+            </div>
+        </div>
+    </div>
 </div>
+
+<div id="thanh-phai">
+    <button type="button" id="nut-thu-gon-phai" title="Thu gọn / mở rộng">‹</button>
+    <div class="thanh-phai-noidung">
+        <div class="thanh-phai-block">
+            <div id="hien-thi-guild"></div>
+            <a href="#" id="nut-dangxuat"><span class="icon-tab">⏻</span><span class="thanh-phai-nhan">Đăng xuất</span></a>
+        </div>
+        <hr>
+        <div class="hang-tab thanh-phai-block">
+            <button type="button" class="nut-tab dangchon" id="tab-btn-upload"><span class="icon-tab"></span><span class="thanh-phai-nhan">Upload ảnh</span></button>
+            <button type="button" class="nut-tab" id="tab-btn-xem"><span class="icon-tab"></span><span class="thanh-phai-nhan">Xem ảnh</span></button>
+        </div>
+    </div>
+</div>
+<div class="lop-phu" id="lop-phu-phai"></div>
 
 <script src="config.js"></script>
 <script>
@@ -54,6 +118,9 @@ document.getElementById('nut-dangxuat').addEventListener('click', function(e) {
 let kenhDangChonId = null;
 let boDemId = 0;
 let danhSachFileDaChon = [];
+let danhSachKenhToanBo = [];
+let danhMucDangDong = new Set();
+let tuKhoaTimKiem = '';
 
 // ----- Tải danh sách kênh -----
 async function taiDanhSachKenh() {
@@ -73,40 +140,179 @@ async function taiDanhSachKenh() {
             return;
         }
 
-        veCayKenh(data.kenh);
+        danhSachKenhToanBo = data.kenh;
+        veCayKenh();
     } catch (err) {
         canhBao.textContent = 'Lỗi kết nối: ' + err.message;
         canhBao.style.display = 'block';
     }
 }
 
-function veCayKenh(danhSachKenh) {
+// ----- Tạo danh mục / kênh mới -----
+let loaiDangTao = null; // 'kenh' hoặc 'danhmuc'
+const formTaoKenh = document.getElementById('form-tao-kenh');
+const inputTenMoi = document.getElementById('ten-moi');
+const selectDanhMucCha = document.getElementById('chon-danhmuc-cha');
+const canhBaoTao = document.getElementById('canh-bao-tao');
+
+function moFormTao(loai) {
+    loaiDangTao = loai;
+    inputTenMoi.value = '';
+    canhBaoTao.style.display = 'none';
+    inputTenMoi.placeholder = loai === 'danhmuc' ? 'Tên danh mục mới...' : 'Tên kênh mới...';
+
+    if (loai === 'kenh') {
+        selectDanhMucCha.style.display = 'block';
+        selectDanhMucCha.innerHTML = '<option value="">-- Không thuộc danh mục --</option>';
+        danhSachKenhToanBo.filter(k => k.type === 4)
+            .sort((a, b) => (a.position || 0) - (b.position || 0))
+            .forEach(function(cat) {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = cat.name;
+                selectDanhMucCha.appendChild(opt);
+            });
+    } else {
+        selectDanhMucCha.style.display = 'none';
+    }
+
+    formTaoKenh.style.display = 'block';
+    inputTenMoi.focus();
+}
+
+function dongFormTao() {
+    formTaoKenh.style.display = 'none';
+    loaiDangTao = null;
+}
+
+document.getElementById('nut-tao-danhmuc').addEventListener('click', function() { moFormTao('danhmuc'); });
+document.getElementById('nut-tao-kenh').addEventListener('click', function() { moFormTao('kenh'); });
+document.getElementById('nut-huy-tao').addEventListener('click', dongFormTao);
+
+document.getElementById('nut-xacnhan-tao').addEventListener('click', async function() {
+    const ten = inputTenMoi.value.trim();
+    if (!ten) {
+        canhBaoTao.textContent = 'Nhập tên trước đã.';
+        canhBaoTao.style.display = 'block';
+        return;
+    }
+
+    const body = {
+        mat_khau: matKhau,
+        guild_id: guildId,
+        name: ten,
+        type: loaiDangTao === 'danhmuc' ? 4 : 0,
+    };
+    if (loaiDangTao === 'kenh' && selectDanhMucCha.value) body.parent_id = selectDanhMucCha.value;
+
+    canhBaoTao.style.display = 'none';
+    try {
+        const res = await fetch(WORKER_URL + '/taokenh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            canhBaoTao.textContent = data.loi || 'Tạo thất bại';
+            canhBaoTao.style.display = 'block';
+            return;
+        }
+
+        dongFormTao();
+        await taiDanhSachKenh();
+    } catch (err) {
+        canhBaoTao.textContent = 'Lỗi kết nối: ' + err.message;
+        canhBaoTao.style.display = 'block';
+    }
+});
+
+function chuoiKhongDau(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function veCayKenh() {
     const container = document.getElementById('danh-sach-kenh');
     container.innerHTML = '';
 
     const nhomTheoCha = {};
-    danhSachKenh.forEach(function(k) {
+    danhSachKenhToanBo.forEach(function(k) {
         const key = k.parent_id || 'goc';
         if (!nhomTheoCha[key]) nhomTheoCha[key] = [];
         nhomTheoCha[key].push(k);
     });
 
     const sapXep = (a, b) => (a.position || 0) - (b.position || 0);
+    const dangTim = tuKhoaTimKiem.trim().length > 0;
+    const tuKhoa = chuoiKhongDau(tuKhoaTimKiem.trim());
+    const khopTuKhoa = (ten) => chuoiKhongDau(ten).includes(tuKhoa);
 
     const kenhGoc = (nhomTheoCha['goc'] || []).filter(k => k.type !== 4).sort(sapXep);
-    const danhSachCategory = danhSachKenh.filter(k => k.type === 4).sort(sapXep);
+    const danhSachCategory = danhSachKenhToanBo.filter(k => k.type === 4).sort(sapXep);
 
-    kenhGoc.forEach(k => container.appendChild(taoDongKenh(k)));
+    let tongSoHienThi = 0;
+
+    // Kênh gốc (không thuộc danh mục nào)
+    kenhGoc.forEach(function(k) {
+        if (dangTim && !khopTuKhoa(k.name)) return;
+        container.appendChild(taoDongKenh(k));
+        tongSoHienThi++;
+    });
 
     danhSachCategory.forEach(function(cat) {
+        const conCua = (nhomTheoCha[cat.id] || []).filter(k => k.type !== 4).sort(sapXep);
+
+        let conHienThi = conCua;
+        let catTuKhop = false;
+        if (dangTim) {
+            catTuKhop = khopTuKhoa(cat.name);
+            conHienThi = catTuKhop ? conCua : conCua.filter(k => khopTuKhoa(k.name));
+            if (conHienThi.length === 0 && !catTuKhop) return; // không có gì khớp trong danh mục này
+        }
+
+        const wrapCategory = document.createElement('div');
+        wrapCategory.className = 'category-block';
+
+        const dangDong = !dangTim && danhMucDangDong.has(cat.id);
+
         const tieuDe = document.createElement('div');
         tieuDe.className = 'category-ten';
-        tieuDe.textContent = cat.name;
-        container.appendChild(tieuDe);
+        tieuDe.innerHTML = '<span class="category-mui-ten' + (dangDong ? ' dong' : '') + '">▶</span><span>' + escapeHtml(cat.name) + '</span>';
+        tieuDe.addEventListener('click', function() {
+            if (danhMucDangDong.has(cat.id)) danhMucDangDong.delete(cat.id);
+            else danhMucDangDong.add(cat.id);
+            veCayKenh();
+        });
+        wrapCategory.appendChild(tieuDe);
 
-        const conCua = (nhomTheoCha[cat.id] || []).filter(k => k.type !== 4).sort(sapXep);
-        conCua.forEach(k => container.appendChild(taoDongKenh(k)));
+        const childrenContainer = document.createElement('div');
+        childrenContainer.className = 'category-con' + (dangDong ? ' dong' : '');
+        conHienThi.forEach(k => childrenContainer.appendChild(taoDongKenh(k)));
+        wrapCategory.appendChild(childrenContainer);
+
+        container.appendChild(wrapCategory);
+        tongSoHienThi += conHienThi.length;
     });
+
+    if (dangTim && tongSoHienThi === 0) {
+        const thongBao = document.createElement('div');
+        thongBao.className = 'khong-tim-thay';
+        thongBao.textContent = 'Không tìm thấy kênh hoặc danh mục phù hợp.';
+        container.appendChild(thongBao);
+    }
+
+    // Giữ trạng thái chọn kênh hiện tại (nếu còn hiển thị)
+    if (kenhDangChonId) {
+        const divTuongUng = container.querySelector('.kenh-item[data-id="' + kenhDangChonId + '"]');
+        if (divTuongUng) divTuongUng.classList.add('dangchon');
+    }
+}
+
+function escapeHtml(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
 }
 
 function taoDongKenh(kenh) {
@@ -115,16 +321,33 @@ function taoDongKenh(kenh) {
     div.dataset.id = kenh.id;
     div.dataset.ten = kenh.name;
     div.textContent = '# ' + kenh.name;
-    div.addEventListener('click', function() {
-        document.querySelectorAll('.kenh-item').forEach(x => x.classList.remove('dangchon'));
-        div.classList.add('dangchon');
-        kenhDangChonId = kenh.id;
-        document.getElementById('ten-kenh-dachon').textContent = kenh.name;
-        document.getElementById('input-anh').disabled = false;
-        document.getElementById('nut-lo-moi').disabled = false;
-        capNhatNutUpload();
-    });
+    div.addEventListener('click', function() { chonKenh(kenh); });
     return div;
+}
+
+const inputTimKiem = document.getElementById('tim-kiem-kenh');
+inputTimKiem.addEventListener('input', function() {
+    tuKhoaTimKiem = inputTimKiem.value;
+    veCayKenh();
+});
+
+function chonKenh(kenh) {
+    document.querySelectorAll('.kenh-item').forEach(x => x.classList.remove('dangchon'));
+    const divTuongUng = document.querySelector('.kenh-item[data-id="' + kenh.id + '"]');
+    if (divTuongUng) divTuongUng.classList.add('dangchon');
+
+    kenhDangChonId = kenh.id;
+    document.getElementById('ten-kenh-dachon').textContent = kenh.name;
+    document.getElementById('ten-kenh-dang-xem').textContent = kenh.name;
+    document.getElementById('input-anh').disabled = false;
+    document.getElementById('nut-lo-moi').disabled = false;
+    capNhatNutUpload();
+    capNhatNutChuyenKenh();
+
+    if (tabDangMo === 'xem') taiAnhTrongKenh();
+
+    // Trên điện thoại, chọn kênh xong thì tự đóng sidebar trái
+    dongMobile('trai');
 }
 
 taiDanhSachKenh();
@@ -262,6 +485,252 @@ nutUpload.addEventListener('click', async function() {
     veLaiDanhSachAnh();
     nutUpload.disabled = false;
 });
+
+// ----- Chuyển tab -----
+let tabDangMo = 'upload';
+const nutTabUpload = document.getElementById('tab-btn-upload');
+const nutTabXem = document.getElementById('tab-btn-xem');
+const vungUpload = document.getElementById('vung-upload');
+const vungXem = document.getElementById('vung-xem');
+
+nutTabUpload.addEventListener('click', function() {
+    tabDangMo = 'upload';
+    nutTabUpload.classList.add('dangchon');
+    nutTabXem.classList.remove('dangchon');
+    vungUpload.style.display = 'block';
+    vungXem.style.display = 'none';
+    dongMobile('phai');
+});
+
+nutTabXem.addEventListener('click', function() {
+    tabDangMo = 'xem';
+    nutTabXem.classList.add('dangchon');
+    nutTabUpload.classList.remove('dangchon');
+    vungUpload.style.display = 'none';
+    vungXem.style.display = 'flex';
+    if (kenhDangChonId) taiAnhTrongKenh();
+    dongMobile('phai');
+});
+
+// ----- Xem ảnh trong kênh -----
+const khungAnh = document.getElementById('khung-anh');
+const canhBaoXem = document.getElementById('canh-bao-xem');
+
+// Chặn chuột phải (mở tab mới / lưu ảnh / copy link ảnh) trên toàn khu vực xem ảnh
+khungAnh.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+// Danh sách blob URL đang dùng, thu hồi khi tải lại để khỏi rò rỉ bộ nhớ
+let dsBlobUrlDangDung = [];
+function thuHoiBlobCu() {
+    dsBlobUrlDangDung.forEach(u => URL.revokeObjectURL(u));
+    dsBlobUrlDangDung = [];
+}
+
+// Lấy ảnh qua Worker (proxy) thay vì dùng thẳng link CDN của Discord,
+// nhờ vậy link ảnh gốc không bao giờ lộ ra ngoài trình duyệt (kể cả devtools).
+async function taiAnhAnDanh(channelId, messageId, attachmentId) {
+    const res = await fetch(WORKER_URL + '/anh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mat_khau: matKhau, channel_id: channelId, message_id: messageId, attachment_id: attachmentId }),
+    });
+    if (!res.ok) throw new Error('Không tải được ảnh');
+    const blob = await res.blob();
+    const urlAnh = URL.createObjectURL(blob);
+    dsBlobUrlDangDung.push(urlAnh);
+    return urlAnh;
+}
+
+async function taiAnhTrongKenh() {
+    khungAnh.innerHTML = '';
+    canhBaoXem.style.display = 'none';
+    thuHoiBlobCu();
+
+    try {
+        const res = await fetch(WORKER_URL + '/tinnhan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mat_khau: matKhau, channel_id: kenhDangChonId }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            canhBaoXem.textContent = data.loi || 'Không tải được ảnh';
+            canhBaoXem.style.display = 'block';
+            return;
+        }
+
+        // API trả tin nhắn mới nhất trước (index 0). Đảo ngược để ảnh gửi trước
+        // (nằm ở cuối mảng) được view lên trước, xếp từ trên xuống dưới.
+        const tinNhanThuTu = data.tin_nhan.slice().reverse();
+        const channelIdKhiTai = kenhDangChonId;
+
+        tinNhanThuTu.forEach(function(tn) {
+            tn.attachments.forEach(function(anh) {
+                const img = document.createElement('img');
+                img.alt = anh.filename;
+                img.loading = 'lazy';
+                img.draggable = false;
+                // Chặn chuột phải, kéo-thả để lưu ảnh, và bôi đen để copy trên từng ảnh
+                img.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+                img.addEventListener('dragstart', function(e) { e.preventDefault(); });
+                khungAnh.appendChild(img);
+
+                taiAnhAnDanh(channelIdKhiTai, tn.id, anh.id)
+                    .then(function(urlAnh) {
+                        if (kenhDangChonId === channelIdKhiTai) img.src = urlAnh;
+                    })
+                    .catch(function() { img.remove(); });
+            });
+        });
+
+        if (khungAnh.children.length === 0) {
+            canhBaoXem.textContent = 'Kênh này chưa có ảnh nào.';
+            canhBaoXem.style.display = 'block';
+        }
+    } catch (err) {
+        canhBaoXem.textContent = 'Lỗi kết nối: ' + err.message;
+        canhBaoXem.style.display = 'block';
+    }
+}
+
+// ----- Chuyển kênh trước/sau (chỉ trong cùng danh mục) -----
+const nutKenhTruoc1 = document.getElementById('nut-kenh-truoc-1');
+const nutKenhSau1 = document.getElementById('nut-kenh-sau-1');
+const nutKenhTruoc2 = document.getElementById('nut-kenh-truoc-2');
+const nutKenhSau2 = document.getElementById('nut-kenh-sau-2');
+
+function layDanhSachCungDanhMuc(kenhId) {
+    const kenhHienTai = danhSachKenhToanBo.find(k => k.id === kenhId);
+    if (!kenhHienTai) return [];
+
+    const chaId = kenhHienTai.parent_id || 'goc';
+    return danhSachKenhToanBo
+        .filter(k => k.type !== 4 && (k.parent_id || 'goc') === chaId)
+        .sort((a, b) => (a.position || 0) - (b.position || 0));
+}
+
+function capNhatNutChuyenKenh() {
+    if (!kenhDangChonId) {
+        [nutKenhTruoc1, nutKenhSau1, nutKenhTruoc2, nutKenhSau2].forEach(n => n.disabled = true);
+        chonChuongEls.forEach(function(el) { el.nut.disabled = true; el.ten.textContent = 'Chưa chọn kênh'; });
+        return;
+    }
+    const cungDanhMuc = layDanhSachCungDanhMuc(kenhDangChonId);
+    const viTri = cungDanhMuc.findIndex(k => k.id === kenhDangChonId);
+    const khongConTruoc = viTri <= 0;
+    const khongConSau = viTri === -1 || viTri >= cungDanhMuc.length - 1;
+
+    nutKenhTruoc1.disabled = khongConTruoc;
+    nutKenhTruoc2.disabled = khongConTruoc;
+    nutKenhSau1.disabled = khongConSau;
+    nutKenhSau2.disabled = khongConSau;
+
+    const kenhHienTai = danhSachKenhToanBo.find(k => k.id === kenhDangChonId);
+    chonChuongEls.forEach(function(el) {
+        el.nut.disabled = false;
+        el.ten.textContent = kenhHienTai ? kenhHienTai.name : '';
+    });
+}
+
+// ----- Droplist chọn nhanh kênh trong danh mục (kiểu web đọc truyện: ◀ ⌄ ▶) -----
+const chonChuongEls = ['1', '2'].map(function(suf) {
+    return {
+        nut: document.getElementById('nut-chon-chuong-' + suf),
+        ten: document.getElementById('ten-chuong-hienthi-' + suf),
+        danhSach: document.getElementById('danhsach-chuong-' + suf),
+    };
+});
+
+function dongTatCaDanhSachChuong() {
+    chonChuongEls.forEach(function(el) { el.danhSach.classList.remove('mo'); });
+}
+
+function veDanhSachChuong(container) {
+    container.innerHTML = '';
+    const cungDanhMuc = layDanhSachCungDanhMuc(kenhDangChonId);
+    cungDanhMuc.forEach(function(k) {
+        const dong = document.createElement('div');
+        dong.className = 'muc-chuong' + (k.id === kenhDangChonId ? ' dangxem' : '');
+        dong.textContent = k.name;
+        dong.addEventListener('click', function() {
+            dongTatCaDanhSachChuong();
+            chonKenh(k);
+        });
+        container.appendChild(dong);
+    });
+}
+
+chonChuongEls.forEach(function(el) {
+    el.nut.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const dangMo = el.danhSach.classList.contains('mo');
+        dongTatCaDanhSachChuong();
+        if (!dangMo) {
+            veDanhSachChuong(el.danhSach);
+            el.danhSach.classList.add('mo');
+        }
+    });
+});
+document.addEventListener('click', dongTatCaDanhSachChuong);
+
+function chuyenKenhTruoc() {
+    const cungDanhMuc = layDanhSachCungDanhMuc(kenhDangChonId);
+    const viTri = cungDanhMuc.findIndex(k => k.id === kenhDangChonId);
+    if (viTri > 0) chonKenh(cungDanhMuc[viTri - 1]);
+}
+
+function chuyenKenhSau() {
+    const cungDanhMuc = layDanhSachCungDanhMuc(kenhDangChonId);
+    const viTri = cungDanhMuc.findIndex(k => k.id === kenhDangChonId);
+    if (viTri !== -1 && viTri < cungDanhMuc.length - 1) chonKenh(cungDanhMuc[viTri + 1]);
+}
+
+nutKenhTruoc1.addEventListener('click', chuyenKenhTruoc);
+nutKenhTruoc2.addEventListener('click', chuyenKenhTruoc);
+nutKenhSau1.addEventListener('click', chuyenKenhSau);
+nutKenhSau2.addEventListener('click', chuyenKenhSau);
+
+// ----- Thu gọn / mở rộng thanh bên phải (desktop) -----
+const thanhPhai = document.getElementById('thanh-phai');
+const nutThuGonPhai = document.getElementById('nut-thu-gon-phai');
+
+nutThuGonPhai.addEventListener('click', function() {
+    thanhPhai.classList.toggle('thu-gon');
+    nutThuGonPhai.textContent = thanhPhai.classList.contains('thu-gon') ? '›' : '‹';
+});
+
+// ----- Menu di động: mở/đóng 2 thanh bên bằng nút nổi + lớp phủ -----
+const cotKenh = document.getElementById('cot-kenh');
+const nutMobileTrai = document.getElementById('nut-mobile-trai');
+const nutMobilePhai = document.getElementById('nut-mobile-phai');
+const lopPhuTrai = document.getElementById('lop-phu-trai');
+const lopPhuPhai = document.getElementById('lop-phu-phai');
+
+function moMobile(ben) {
+    if (ben === 'trai') {
+        cotKenh.classList.add('mo');
+        lopPhuTrai.classList.add('mo');
+    } else {
+        thanhPhai.classList.add('mo');
+        lopPhuPhai.classList.add('mo');
+    }
+}
+function dongMobile(ben) {
+    if (ben === 'trai') {
+        cotKenh.classList.remove('mo');
+        lopPhuTrai.classList.remove('mo');
+    } else {
+        thanhPhai.classList.remove('mo');
+        lopPhuPhai.classList.remove('mo');
+    }
+}
+
+nutMobileTrai.addEventListener('click', function() { moMobile('trai'); });
+nutMobilePhai.addEventListener('click', function() { moMobile('phai'); });
+lopPhuTrai.addEventListener('click', function() { dongMobile('trai'); });
+lopPhuPhai.addEventListener('click', function() { dongMobile('phai'); });
+
 </script>
 </body>
 </html>
