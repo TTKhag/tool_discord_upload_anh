@@ -153,4 +153,3 @@ async function uploadAnh(request, env, corsHeaders) {
   }
   return jsonRes({ ok: true, ket_qua: data }, 200, corsHeaders);
 }
-
