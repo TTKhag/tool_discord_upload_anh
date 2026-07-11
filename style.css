@@ -15,25 +15,7 @@ body { font-family: Arial, sans-serif; background:#2b2d31; color:#fff; margin:0;
 
 /* ================= Bố cục trang kênh: trái - giữa - phải ================= */
 .trang-kenh { display:flex; height:100vh; height:100dvh; overflow:hidden; position:relative; }
-.danhsach-chuong {
-    display:none; position:absolute; left:50%; transform:translateX(-50%);
-    width:260px; max-height:280px; overflow-y:auto;
-    background:#232428; border:1px solid #1e1f22; border-radius:6px;
-    box-shadow:0 4px 16px rgba(0,0,0,.5); z-index:10;
-}
-.danhsach-chuong.mo { display:block; }
-.muc-chuong {
-    padding:9px 12px; font-size:13px; color:#dbdee1; cursor:pointer;
-    border-bottom:1px solid #2b2d31;
-}
-.muc-chuong:last-child { border-bottom:none; }
-.muc-chuong:hover { background:#35373c; }
-.muc-chuong.dangxem { background:#5865f2; color:#fff; font-weight:bold; }
 
-/* Thanh trên (header, nằm đầu trang): droplist đổ XUỐNG dưới nút */
-.vung-xem-header .danhsach-chuong { top:calc(100% + 6px); bottom:auto; }
-/* Thanh dưới (footer, nằm cuối trang): droplist đổ LÊN trên nút */
-.vung-xem-footer .danhsach-chuong { bottom:calc(100% + 6px); top:auto; }
 /* ---- Cột trái: danh sách kênh ---- */
 #cot-kenh {
     width:280px; min-width:280px; max-width:280px;
