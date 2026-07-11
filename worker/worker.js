@@ -25,9 +25,6 @@ export default {
       if (url.pathname === '/taokenh' && request.method === 'POST') {
         return await taoKenh(request, env, corsHeaders);
       }
-      if (url.pathname === '/anh' && request.method === 'POST') {
-        return await layAnhGoc(request, env, corsHeaders);
-      }
       return jsonRes({ loi: 'Không tìm thấy endpoint' }, 404, corsHeaders);
     } catch (err) {
       return jsonRes({ loi: 'Lỗi server: ' + err.message }, 500, corsHeaders);
@@ -79,58 +76,14 @@ async function layAnhTrongKenh(request, env, corsHeaders) {
     return jsonRes({ loi: 'Không lấy được tin nhắn (mã ' + res.status + ')', chi_tiet: data }, res.status, corsHeaders);
   }
 
-  // Không trả url gốc của Discord CDN về trình duyệt — chỉ trả id để FE gọi
-  // ngược lại endpoint /anh khi cần hiển thị, tránh lộ link ảnh qua DOM/devtools.
   const tinNhan = data.map(tn => ({
     id: tn.id,
     attachments: (tn.attachments || [])
       .filter(a => (a.content_type || '').startsWith('image/'))
-      .map(a => ({ id: a.id, filename: a.filename })),
+      .map(a => ({ url: a.url, filename: a.filename })),
   }));
 
   return jsonRes({ tin_nhan: tinNhan }, 200, corsHeaders);
-}
-
-// Lấy đúng 1 ảnh gốc (proxy): FE gửi id tin nhắn + id đính kèm, Worker tự tra
-// lại link thật trên Discord rồi stream bytes về, link CDN gốc không bao giờ
-// lộ ra phía trình duyệt.
-async function layAnhGoc(request, env, corsHeaders) {
-  const body = await request.json();
-
-  if (body.mat_khau !== env.APP_PASSWORD) {
-    return jsonRes({ loi: 'Sai mật khẩu' }, 401, corsHeaders);
-  }
-
-  const { channel_id, message_id, attachment_id } = body;
-  if (!channel_id || !message_id || !attachment_id) {
-    return jsonRes({ loi: 'Thiếu tham số' }, 400, corsHeaders);
-  }
-
-  const resTin = await fetch(`https://discord.com/api/v10/channels/${channel_id}/messages/${message_id}`, {
-    headers: { Authorization: `Bot ${env.BOT_TOKEN}` },
-  });
-  if (!resTin.ok) {
-    return jsonRes({ loi: 'Không lấy được tin nhắn gốc (mã ' + resTin.status + ')' }, resTin.status, corsHeaders);
-  }
-  const tinNhan = await resTin.json();
-  const dinhKem = (tinNhan.attachments || []).find(a => a.id === attachment_id);
-  if (!dinhKem) {
-    return jsonRes({ loi: 'Không tìm thấy ảnh' }, 404, corsHeaders);
-  }
-
-  const resAnh = await fetch(dinhKem.url);
-  if (!resAnh.ok || !resAnh.body) {
-    return jsonRes({ loi: 'Không tải được ảnh gốc' }, 502, corsHeaders);
-  }
-
-  return new Response(resAnh.body, {
-    status: 200,
-    headers: {
-      ...corsHeaders,
-      'Content-Type': dinhKem.content_type || 'application/octet-stream',
-      'Cache-Control': 'no-store',
-    },
-  });
 }
 
 // Tạo danh mục (type 4) hoặc kênh chữ (type 0) trong guild
