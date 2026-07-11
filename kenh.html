@@ -519,32 +519,9 @@ const canhBaoXem = document.getElementById('canh-bao-xem');
 // Chặn chuột phải (mở tab mới / lưu ảnh / copy link ảnh) trên toàn khu vực xem ảnh
 khungAnh.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-// Danh sách blob URL đang dùng, thu hồi khi tải lại để khỏi rò rỉ bộ nhớ
-let dsBlobUrlDangDung = [];
-function thuHoiBlobCu() {
-    dsBlobUrlDangDung.forEach(u => URL.revokeObjectURL(u));
-    dsBlobUrlDangDung = [];
-}
-
-// Lấy ảnh qua Worker (proxy) thay vì dùng thẳng link CDN của Discord,
-// nhờ vậy link ảnh gốc không bao giờ lộ ra ngoài trình duyệt (kể cả devtools).
-async function taiAnhAnDanh(channelId, messageId, attachmentId) {
-    const res = await fetch(WORKER_URL + '/anh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mat_khau: matKhau, channel_id: channelId, message_id: messageId, attachment_id: attachmentId }),
-    });
-    if (!res.ok) throw new Error('Không tải được ảnh');
-    const blob = await res.blob();
-    const urlAnh = URL.createObjectURL(blob);
-    dsBlobUrlDangDung.push(urlAnh);
-    return urlAnh;
-}
-
 async function taiAnhTrongKenh() {
     khungAnh.innerHTML = '';
     canhBaoXem.style.display = 'none';
-    thuHoiBlobCu();
 
     try {
         const res = await fetch(WORKER_URL + '/tinnhan', {
@@ -563,24 +540,18 @@ async function taiAnhTrongKenh() {
         // API trả tin nhắn mới nhất trước (index 0). Đảo ngược để ảnh gửi trước
         // (nằm ở cuối mảng) được view lên trước, xếp từ trên xuống dưới.
         const tinNhanThuTu = data.tin_nhan.slice().reverse();
-        const channelIdKhiTai = kenhDangChonId;
 
         tinNhanThuTu.forEach(function(tn) {
             tn.attachments.forEach(function(anh) {
                 const img = document.createElement('img');
+                img.src = anh.url;
                 img.alt = anh.filename;
                 img.loading = 'lazy';
                 img.draggable = false;
-                // Chặn chuột phải, kéo-thả để lưu ảnh, và bôi đen để copy trên từng ảnh
+                // Chặn chuột phải và kéo-thả để hạn chế mở tab mới / lưu ảnh / copy link
                 img.addEventListener('contextmenu', function(e) { e.preventDefault(); });
                 img.addEventListener('dragstart', function(e) { e.preventDefault(); });
                 khungAnh.appendChild(img);
-
-                taiAnhAnDanh(channelIdKhiTai, tn.id, anh.id)
-                    .then(function(urlAnh) {
-                        if (kenhDangChonId === channelIdKhiTai) img.src = urlAnh;
-                    })
-                    .catch(function() { img.remove(); });
             });
         });
 
