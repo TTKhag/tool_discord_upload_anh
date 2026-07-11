@@ -52,7 +52,7 @@
 
     <div id="vung-xem" style="display:none;">
         <div class="vung-xem-header">
-            <h3>Đang xem: <span id="ten-kenh-dang-xem">Chưa chọn kênh</span></h3>
+            <h3>Đang xem: <span id="ten-dm-dang-xem">Chưa chọn kênh</span></h3>
             <div class="canh-bao" id="canh-bao-xem" style="display:none;"></div>
             <div class="thanh-dieu-huong">
                 <button type="button" class="nut-phu" id="nut-kenh-truoc-1" disabled>◀ Kênh trước</button>
@@ -339,6 +339,7 @@ function chonKenh(kenh) {
     kenhDangChonId = kenh.id;
     document.getElementById('ten-kenh-dachon').textContent = kenh.name;
     document.getElementById('ten-kenh-dang-xem').textContent = kenh.name;
+    document.getElementById('ten-dm-dang-xem').textContent = danhmuc.name;
     document.getElementById('input-anh').disabled = false;
     document.getElementById('nut-lo-moi').disabled = false;
     capNhatNutUpload();
